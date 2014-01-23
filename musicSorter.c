@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <libavformat/avformat.h>
+#include <libavutil/log.h>
 
 #include "data.h"
 
@@ -44,6 +45,7 @@ int main(int argc, char ** argv) {
     dest = argv[optind+1];
 
     av_register_all();
+    av_log_set_level(AV_LOG_ERROR);
     printf("loading all filenames\n");
     GPtrArray *files = g_ptr_array_new();
     getFiles(source, files);
@@ -102,13 +104,11 @@ void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
         strcat(dirname, "/");
         strcat(dirname, current->validTitle);
         strcat(dirname, current->ext);
-        printf("%s\n%s\n",current->filename,dirname);
         if(copy_mode == MOVE) {
             if(rename(current->filename,dirname) != 0) {
                 printf("%s\n",strerror(errno));
             }
         } else {
-            //todo: add error checking
             copy(current->filename, dirname);
         }
     }
@@ -127,7 +127,10 @@ void copy(char* source, char* dest) {
     int src = open(source, O_RDONLY);
     fstat(src, &stat_buf);
     int dst = open(dest,O_WRONLY | O_CREAT, stat_buf.st_mode);
-    sendfile(dst, src, &offset, stat_buf.st_size);
+    if (sendfile(dst, src, &offset, stat_buf.st_size) == -1) {
+        printf("Error occured while copying %s to %s. Error: %s\n",
+         source, dest, strerror(errno));
+    }
     close(src);
     close(dst);
 }
