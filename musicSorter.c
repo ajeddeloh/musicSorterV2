@@ -1,32 +1,54 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sendfile.h>
 #include <glib-2.0/glib.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <getopt.h>
 #include <libavformat/avformat.h>
 
 #include "data.h"
 
+enum mode {COPY, MOVE};
+
 void getFiles(char* dir, GPtrArray*);
-void sortMusic(char* rootDir, GPtrArray*);
+void sortMusic(char* rootDir, GPtrArray*, int copy_mode);
 void betterMkdir(char* dir);
+void copy(char* src, char *dest);
 
 int main(int argc, char ** argv) {
-    if ( argc != 3) {
-        printf("please run with the form: sorter <src> <dest>\n");
-        return -1;
+    int copy_mode = COPY;
+    int c;
+    char *source, *dest;
+    while ((c = getopt(argc,argv,"m")) != -1) {
+        switch(c) {
+        case 'm':
+            copy_mode = MOVE;
+            break;
+        default:
+            printf("error, invalid argument");
+            exit(EXIT_FAILURE);
+        }
     }
+    
+    if(argv[optind] == NULL || argv[optind+1] == NULL) {
+        printf("Not enough arguments");
+        exit(EXIT_FAILURE);
+    }
+    source = argv[optind];
+    dest = argv[optind+1];
+
     av_register_all();
-    char* source = argv[1];
-    char* dest = argv[2];
     printf("loading all filenames\n");
     GPtrArray *files = g_ptr_array_new();
     getFiles(source, files);
     printf("loaded %d files\n", files->len);
-    sortMusic(dest, files);
+    sortMusic(dest, files, copy_mode);
     return 0;
 }
 
@@ -61,7 +83,7 @@ void getFiles(char* dir, GPtrArray* files) {
     free(entry);
 }
 
-void sortMusic(char* rootDir, GPtrArray* songs) {
+void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
     betterMkdir(rootDir);
     int i;
     for(i = 0; i < songs->len; i++) {
@@ -81,8 +103,13 @@ void sortMusic(char* rootDir, GPtrArray* songs) {
         strcat(dirname, current->validTitle);
         strcat(dirname, current->ext);
         printf("%s\n%s\n",current->filename,dirname);
-        if(rename(current->filename,dirname) != 0) {
-            printf("%s\n",strerror(errno));
+        if(copy_mode == MOVE) {
+            if(rename(current->filename,dirname) != 0) {
+                printf("%s\n",strerror(errno));
+            }
+        } else {
+            //todo: add error checking
+            copy(current->filename, dirname);
         }
     }
 }
@@ -92,4 +119,15 @@ void betterMkdir(char* dir) {
     if(err == -1 && errno != EEXIST) {
         printf("Error occured while creating %s. Error: %s\n",dir,strerror(errno));
     }
+}
+
+void copy(char* source, char* dest) {
+    struct stat stat_buf;
+    off_t offset = 0;
+    int src = open(source, O_RDONLY);
+    fstat(src, &stat_buf);
+    int dst = open(dest,O_WRONLY | O_CREAT, stat_buf.st_mode);
+    sendfile(dst, src, &offset, stat_buf.st_size);
+    close(src);
+    close(dst);
 }
