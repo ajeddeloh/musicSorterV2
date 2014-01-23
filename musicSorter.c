@@ -27,7 +27,6 @@ int main(int argc, char ** argv) {
     getFiles(source, files);
     printf("loaded %d files\n", files->len);
     sortMusic(dest, files);
-    printf("%s\n",((Song*)g_ptr_array_index(files,0))->validTitle);
     return 0;
 }
 
@@ -40,8 +39,9 @@ void getFiles(char* dir, GPtrArray* files) {
     struct dirent *entry = readdir(d);
     struct stat statp;
     while(entry != NULL) {
-        char* fullname = malloc(strlen(dir)+strlen(entry->d_name)+2);
-        sprintf(fullname, "%s/%s", dir, entry->d_name);
+        int len = strlen(dir)+strlen(entry->d_name)+2;
+        char* fullname = malloc(len);
+        snprintf(fullname, len, "%s/%s", dir, entry->d_name);
         stat(fullname, &statp);
         if(S_ISDIR(statp.st_mode)){
             if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) { 
@@ -64,11 +64,15 @@ void getFiles(char* dir, GPtrArray* files) {
 void sortMusic(char* rootDir, GPtrArray* songs) {
     betterMkdir(rootDir);
     int i;
-    int rootDirLen = strlen(rootDir);
     for(i = 0; i < songs->len; i++) {
         Song* current = (Song*)g_ptr_array_index(songs, i);
-        char* dirname = malloc(rootDirLen+strlen(current->validArtist)+strlen(current->validAlbum)+strlen(current->validTitle)+strlen(current->ext)+4);
-        sprintf(dirname, "%s/%s",rootDir, current->validArtist);
+        int len = strlen(rootDir)+
+                strlen(current->validArtist)+
+                strlen(current->validAlbum)+
+                strlen(current->validTitle)+
+                strlen(current->ext)+4;
+        char* dirname = malloc(len);
+        snprintf(dirname, len, "%s/%s",rootDir, current->validArtist);
         betterMkdir(dirname);
         strcat(dirname, "/");
         strcat(dirname, current->validAlbum);
