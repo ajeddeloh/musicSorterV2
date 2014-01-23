@@ -80,7 +80,10 @@ void sortMusic(char* rootDir, GPtrArray* songs) {
         strcat(dirname, "/");
         strcat(dirname, current->validTitle);
         strcat(dirname, current->ext);
-        rename(current->filename,dirname);
+        printf("%s\n%s\n",current->filename,dirname);
+        if(rename(current->filename,dirname) != 0) {
+            printf("%s\n",strerror(errno));
+        }
     }
 }
 
