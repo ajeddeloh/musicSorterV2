@@ -5,4 +5,4 @@ FFMPEG = `pkg-config libavformat libavutil --cflags --libs`
 FLAGS = -g -Wall
 
 all:
-	$(CC) $(GLIB) $(FFMPEG) $(FLAGS) *.c
+	$(CC) $(GLIB) $(FFMPEG) $(FLAGS) *.c -o musicSorter
