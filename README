@@ -1,0 +1,1 @@
+This is a small c program to sort music by metadata using libavformat. it should be run with ./a.out SOURCE_FOLDER DEST_FOLDER. 
