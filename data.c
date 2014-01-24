@@ -73,7 +73,18 @@ void getMetadata(AVFormatContext* handle, char** title, char** album, char** art
 } 
 
 int isAudio(AVFormatContext* handle) {
-   return true; 
+    int hasAudio = false;
+    int i;
+    for(i = 0; i < handle->nb_streams; i++ ) {
+        enum AVMediaType t = handle->streams[i]->codec->codec_type;
+        if(t == AVMEDIA_TYPE_VIDEO) {
+            return false;
+        }
+        if(t == AVMEDIA_TYPE_AUDIO) {
+            hasAudio = true;
+        }
+    }
+    return hasAudio;
 }
 
 char* makeValid(char* fname) {
