@@ -46,6 +46,7 @@ int main(int argc, char ** argv) {
 
     av_register_all();
     av_log_set_level(AV_LOG_ERROR);
+
     printf("loading all filenames\n");
     GPtrArray *files = g_ptr_array_new();
     getFiles(source, files);
@@ -54,6 +55,11 @@ int main(int argc, char ** argv) {
     return 0;
 }
 
+/* 
+ * Recursively finds all files in the directory dir and creates a Song
+ * for each file found and stores them in files.
+ * Returns: nothing
+ */
 void getFiles(char* dir, GPtrArray* files) {
     DIR *d = opendir(dir);
     if( !d ) {
@@ -85,6 +91,11 @@ void getFiles(char* dir, GPtrArray* files) {
     free(entry);
 }
 
+/*
+ * takes every Song* in songs and moves/copies (dependant on copy_mode)
+ * it into the correct directory into rootDir.
+ * Returns: nothing
+ */
 void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
     betterMkdir(rootDir);
     int i;
@@ -114,6 +125,11 @@ void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
     }
 }
 
+/*
+ * creates a directory and prints an error if it fails, except if the directory
+ * already exists, thats ok
+ * Returns: nothing
+ */
 void betterMkdir(char* dir) {
     int err = mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO );
     if(err == -1 && errno != EEXIST) {
@@ -121,6 +137,10 @@ void betterMkdir(char* dir) {
     }
 }
 
+/* 
+ * Copies the file source to location dest
+ * returns: nothing
+ */
 void copy(char* source, char* dest) {
     struct stat stat_buf;
     off_t offset = 0;

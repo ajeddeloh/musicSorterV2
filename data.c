@@ -57,6 +57,11 @@ void getMetadata(AVFormatContext* handle, char** title, char** album, char** art
     AVDictionaryEntry *ent = av_dict_get(dict, "artist", NULL, 0);
     if(ent != NULL) {
         *artist = strdup(ent->value);
+    } else { //could be that the artist is under album_artist
+        ent = av_dict_get(dict, "album_artist", NULL, 0);
+        if(ent != NULL) {
+            *artist = strdup(ent->value);
+        }
     }
 
     ent = av_dict_get(dict, "album", NULL, 0);
