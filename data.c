@@ -6,42 +6,43 @@
 
 Song* song_new(char* filename) {
     Song* song = malloc(sizeof(Song));
+    song->metadata = malloc(sizeof(Metadata));
     song->filename = filename;
     AVFormatContext *handle = NULL;
     if(avformat_open_input(&handle, filename, NULL, NULL) != 0) {
         printf("Error opening file: %s",filename);
         return NULL;
     }
-    getMetadata(handle, &song->title, &song->album, &song->artist, &song->trackNo);
-    if(song->title == NULL) {
+    getMetadata(handle, song->metadata);
+    if(song->metadata->title == NULL) {
         printf("No title found for %s. Using filename.\n",filename);
-        song->title = strdup(strrchr(filename,'/')+1);
-        *strrchr(song->title,'.') = '\0';
+        song->metadata->title = strdup(strrchr(filename,'/')+1);
+        *strrchr(song->metadata->title,'.') = '\0';
     }
 
-    if(song->album == NULL) {
+    if(song->metadata->album == NULL) {
         printf("No album found for %s. Using <Unknown Album>\n",filename);
-        song->album = "Unknown Album";
+        song->metadata->album = "Unknown Album";
     }
     
-    if(song->artist == NULL) {
+    if(song->metadata->artist == NULL) {
         printf("No artist found for %s. Using <Unknown Artist>\n",filename);
-        song->artist = "Unknown Artist";
+        song->metadata->artist = "Unknown Artist";
     }
         
     avformat_close_input(&handle);
     song->ext = strdup(strrchr(filename,'.'));
     
-    song->validTitle = makeValid(song->title);
-    song->validAlbum = makeValid(song->album);
-    song->validArtist = makeValid(song->artist);
+    song->validTitle = makeValid(song->metadata->title);
+    song->validAlbum = makeValid(song->metadata->album);
+    song->validArtist = makeValid(song->metadata->artist);
     return song;
 }
 
-void getMetadata(AVFormatContext* handle, char** title, char** album, char** artist, int* trackNo) {
-    *title = NULL;
-    *album = NULL;
-    *artist = NULL;
+void getMetadata(AVFormatContext* handle, Metadata* metadata) {
+    metadata->title = NULL;
+    metadata->album = NULL;
+    metadata->artist = NULL;
     AVDictionary *dict = handle->metadata;
     if(dict == NULL) {
         int i;
@@ -56,22 +57,22 @@ void getMetadata(AVFormatContext* handle, char** title, char** album, char** art
     }
     AVDictionaryEntry *ent = av_dict_get(dict, "artist", NULL, 0);
     if(ent != NULL) {
-        *artist = strdup(ent->value);
+        metadata->artist = strdup(ent->value);
     } else { //could be that the artist is under album_artist
         ent = av_dict_get(dict, "album_artist", NULL, 0);
         if(ent != NULL) {
-            *artist = strdup(ent->value);
+            metadata->artist = strdup(ent->value);
         }
     }
 
     ent = av_dict_get(dict, "album", NULL, 0);
     if(ent != NULL) {
-        *album = strdup(ent->value);
+        metadata->album = strdup(ent->value);
     }
 
     ent = av_dict_get(dict, "title", NULL, 0);
     if(ent != NULL) {
-        *title = strdup(ent->value);
+        metadata->title = strdup(ent->value);
     }
     //todo: add trackno    
     return;

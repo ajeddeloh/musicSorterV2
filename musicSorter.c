@@ -24,12 +24,16 @@ void copy(char* src, char *dest);
 
 int main(int argc, char ** argv) {
     int copy_mode = COPY;
+    int combine_disks = false;
     int c;
     char *source, *dest;
-    while ((c = getopt(argc,argv,"m")) != -1) {
+    while ((c = getopt(argc,argv,"md")) != -1) {
         switch(c) {
         case 'm':
             copy_mode = MOVE;
+            break;
+        case 'd':
+            combine_disks = true;
             break;
         default:
             printf("error, invalid argument");

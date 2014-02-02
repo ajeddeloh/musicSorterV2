@@ -4,16 +4,21 @@
 #define true 1
 #define false 0
 
+typedef struct Metadata {
+    char *title;
+    char *album;
+    char *artist;
+    int trackNo;
+    int diskNo;
+} Metadata;
+
 typedef struct Song {
+    Metadata *metadata;
     char* filename;
-    char* title;
     char* validTitle;//valid for filenames
-    char* album;
     char* validAlbum;
-    char* artist;
     char* validArtist;
     char* ext;
-    int trackNo;
     char* validname;
 } Song;
 
@@ -27,7 +32,7 @@ char* makeValid(char* fname);
 //sets the title, artist, and title char**'s based on the metadata in the
 //AVFormatContext. 
 //Returns nothing
-void getMetadata(AVFormatContext*, char**, char**, char**, int*);
+void getMetadata(AVFormatContext*, Metadata*);
 
 //returns if the AVFormatConext has just audio in it (not video)
 int isAudio(AVFormatContext*);
