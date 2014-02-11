@@ -2,15 +2,17 @@
 #include <libavformat/avformat.h>
 #include <libavutil/dict.h>
 #include <ctype.h>
+#include <string.h>
 #include "data.h"
 
 Song* song_new(char* filename) {
     Song* song = malloc(sizeof(Song));
     song->metadata = malloc(sizeof(Metadata));
-    song->filename = filename;
+    song->filename = strdup(filename);
     AVFormatContext *handle = NULL;
     if(avformat_open_input(&handle, filename, NULL, NULL) != 0) {
         printf("Error opening file: %s",filename);
+        song_free(song);
         return NULL;
     }
     getMetadata(handle, song->metadata);
@@ -39,14 +41,27 @@ Song* song_new(char* filename) {
     return song;
 }
 
+void song_free(Song* song) {
+    if(song == NULL) {
+        return;
+    }
+    metadata_free(song->metadata);
+    free(song->filename);
+    free(song->validTitle);
+    free(song->validName);
+    free(song->validAlbum);
+    free(song->validArtist);
+    free(song->ext);
+    free(song);
+}   
+
 void getMetadata(AVFormatContext* handle, Metadata* metadata) {
     metadata->title = NULL;
     metadata->album = NULL;
     metadata->artist = NULL;
     AVDictionary *dict = handle->metadata;
     if(dict == NULL) {
-        int i;
-        for (i = 0; i < handle->nb_streams; i++) {
+        for (int i = 0; i < handle->nb_streams; i++) {
             if(handle->streams[i]->metadata != NULL) {
                 av_dict_copy(&dict, handle->streams[i]->metadata, 0);
             }
@@ -55,33 +70,39 @@ void getMetadata(AVFormatContext* handle, Metadata* metadata) {
     if(dict == NULL) { //absoltely could not find metadata
         return;
     }
-    AVDictionaryEntry *ent = av_dict_get(dict, "artist", NULL, 0);
+    AVDictionaryEntry *ent = av_dict_get(dict, "artist", NULL, AV_DICT_DONT_STRDUP_VAL);
     if(ent != NULL) {
         metadata->artist = strdup(ent->value);
     } else { //could be that the artist is under album_artist
-        ent = av_dict_get(dict, "album_artist", NULL, 0);
+        ent = av_dict_get(dict, "album_artist", NULL, AV_DICT_DONT_STRDUP_VAL);
         if(ent != NULL) {
             metadata->artist = strdup(ent->value);
         }
     }
 
-    ent = av_dict_get(dict, "album", NULL, 0);
+    ent = av_dict_get(dict, "album", NULL, AV_DICT_DONT_STRDUP_VAL);
     if(ent != NULL) {
         metadata->album = strdup(ent->value);
     }
 
-    ent = av_dict_get(dict, "title", NULL, 0);
+    ent = av_dict_get(dict, "title", NULL, AV_DICT_DONT_STRDUP_VAL);
     if(ent != NULL) {
         metadata->title = strdup(ent->value);
     }
     //todo: add trackno    
     return;
+}
+
+void metadata_free(Metadata* metadata) {
+    free(metadata->title);
+    free(metadata->album);
+    free(metadata->artist);
+    free(metadata);
 } 
 
 int isAudio(AVFormatContext* handle) {
     int hasAudio = false;
-    int i;
-    for(i = 0; i < handle->nb_streams; i++ ) {
+    for(int i = 0; i < handle->nb_streams; i++ ) {
         enum AVMediaType t = handle->streams[i]->codec->codec_type;
         if(t == AVMEDIA_TYPE_VIDEO) {
             return false;

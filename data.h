@@ -19,11 +19,17 @@ typedef struct Song {
     char* validAlbum;
     char* validArtist;
     char* ext;
-    char* validname;
+    char* validName;
 } Song;
 
 //creates a Song from the specified file and returns it.
 Song* song_new(char* filename);
+
+//free the specified metadata
+void metadata_free(Metadata* metadata);
+
+//frees the specifed song
+void song_free(Song* song);
 
 //returns a new string that has all the invalid characters for filenames
 //stripped out of it
@@ -33,6 +39,7 @@ char* makeValid(char* fname);
 //AVFormatContext. 
 //Returns nothing
 void getMetadata(AVFormatContext*, Metadata*);
+
 
 //returns if the AVFormatConext has just audio in it (not video)
 int isAudio(AVFormatContext*);

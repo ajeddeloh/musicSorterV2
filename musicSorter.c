@@ -56,6 +56,8 @@ int main(int argc, char ** argv) {
     getFiles(source, files);
     printf("loaded %d files\n", files->len);
     sortMusic(dest, files, copy_mode);
+    
+    g_ptr_array_free(files, true);
     return 0;
 }
 
@@ -89,10 +91,11 @@ void getFiles(char* dir, GPtrArray* files) {
                 printf("Error opening/parsing: %s\n", fullname);
             }
         }
+        free(fullname);
+        free(entry);
         entry = readdir(d);
     }
     closedir(d);
-    free(entry);
 }
 
 /*
@@ -102,8 +105,7 @@ void getFiles(char* dir, GPtrArray* files) {
  */
 void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
     betterMkdir(rootDir);
-    int i;
-    for(i = 0; i < songs->len; i++) {
+    for(int i = 0; i < songs->len; i++) {
         Song* current = (Song*)g_ptr_array_index(songs, i);
         int len = strlen(rootDir)+
                 strlen(current->validArtist)+
@@ -126,6 +128,8 @@ void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
         } else {
             copy(current->filename, dirname);
         }
+        free(dirname);
+        song_free(current);
     }
 }
 
