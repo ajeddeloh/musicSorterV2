@@ -21,6 +21,7 @@ void getFiles(char* dir, GPtrArray*);
 void sortMusic(char* rootDir, GPtrArray*, int copy_mode);
 void betterMkdir(char* dir);
 void copy(char* src, char *dest);
+void move(char* src, char *dest);
 
 int main(int argc, char ** argv) {
     int copy_mode = COPY;
@@ -92,7 +93,6 @@ void getFiles(char* dir, GPtrArray* files) {
             }
         }
         free(fullname);
-        free(entry);
         entry = readdir(d);
     }
     closedir(d);
@@ -122,9 +122,7 @@ void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
         strcat(dirname, current->validTitle);
         strcat(dirname, current->ext);
         if(copy_mode == MOVE) {
-            if(rename(current->filename,dirname) != 0) {
-                printf("%s\n",strerror(errno));
-            }
+            move(current->filename, dirname);
         } else {
             copy(current->filename, dirname);
         }
@@ -142,6 +140,17 @@ void betterMkdir(char* dir) {
     int err = mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO );
     if(err == -1 && errno != EEXIST) {
         printf("Error occured while creating %s. Error: %s\n",dir,strerror(errno));
+    }
+}
+
+/*
+ * Moves a file, similar to mv. Tries to rename it and failing that copies it then
+ * removes the original.
+ */
+void move(char *source, char *dest) {
+    if(rename(source,dest) != 0) {
+        copy(source,dest);
+        remove(source);
     }
 }
 

@@ -6,15 +6,18 @@
 #include "data.h"
 
 Song* song_new(char* filename) {
-    Song* song = malloc(sizeof(Song));
-    song->metadata = malloc(sizeof(Metadata));
-    song->filename = strdup(filename);
     AVFormatContext *handle = NULL;
     if(avformat_open_input(&handle, filename, NULL, NULL) != 0) {
         printf("Error opening file: %s",filename);
-        song_free(song);
         return NULL;
     }
+    if(!isAudio(handle)) {
+        avformat_close_input(&handle);
+        return NULL;
+    }
+    Song* song = malloc(sizeof(Song));
+    song->filename = strdup(filename);
+    song->metadata = malloc(sizeof(Metadata));
     getMetadata(handle, song->metadata);
     if(song->metadata->title == NULL) {
         printf("No title found for %s. Using filename.\n",filename);
@@ -24,12 +27,12 @@ Song* song_new(char* filename) {
 
     if(song->metadata->album == NULL) {
         printf("No album found for %s. Using <Unknown Album>\n",filename);
-        song->metadata->album = "Unknown Album";
+        song->metadata->album = strdup("Unknown Album");;
     }
     
     if(song->metadata->artist == NULL) {
         printf("No artist found for %s. Using <Unknown Artist>\n",filename);
-        song->metadata->artist = "Unknown Artist";
+        song->metadata->artist = strdup("Unknown Artist");
     }
         
     avformat_close_input(&handle);
@@ -48,7 +51,6 @@ void song_free(Song* song) {
     metadata_free(song->metadata);
     free(song->filename);
     free(song->validTitle);
-    free(song->validName);
     free(song->validAlbum);
     free(song->validArtist);
     free(song->ext);
@@ -70,11 +72,11 @@ void getMetadata(AVFormatContext* handle, Metadata* metadata) {
     if(dict == NULL) { //absoltely could not find metadata
         return;
     }
-    AVDictionaryEntry *ent = av_dict_get(dict, "artist", NULL, AV_DICT_DONT_STRDUP_VAL);
+    AVDictionaryEntry *ent = av_dict_get(dict, "album_artist", NULL, AV_DICT_DONT_STRDUP_VAL);
     if(ent != NULL) {
         metadata->artist = strdup(ent->value);
     } else { //could be that the artist is under album_artist
-        ent = av_dict_get(dict, "album_artist", NULL, AV_DICT_DONT_STRDUP_VAL);
+        ent = av_dict_get(dict, "artist", NULL, AV_DICT_DONT_STRDUP_VAL);
         if(ent != NULL) {
             metadata->artist = strdup(ent->value);
         }
@@ -89,8 +91,6 @@ void getMetadata(AVFormatContext* handle, Metadata* metadata) {
     if(ent != NULL) {
         metadata->title = strdup(ent->value);
     }
-    //todo: add trackno    
-    return;
 }
 
 void metadata_free(Metadata* metadata) {
@@ -104,7 +104,7 @@ int isAudio(AVFormatContext* handle) {
     int hasAudio = false;
     for(int i = 0; i < handle->nb_streams; i++ ) {
         enum AVMediaType t = handle->streams[i]->codec->codec_type;
-        if(t == AVMEDIA_TYPE_VIDEO) {
+        if(t == AVMEDIA_TYPE_VIDEO && !(handle->streams[i]->disposition & AV_DISPOSITION_ATTACHED_PIC)) {
             return false;
         }
         if(t == AVMEDIA_TYPE_AUDIO) {

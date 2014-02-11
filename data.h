@@ -19,7 +19,6 @@ typedef struct Song {
     char* validAlbum;
     char* validArtist;
     char* ext;
-    char* validName;
 } Song;
 
 //creates a Song from the specified file and returns it.
