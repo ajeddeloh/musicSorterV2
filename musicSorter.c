@@ -1,45 +1,42 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <dirent.h>
-#include <fcntl.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/sendfile.h>
 #include <glib-2.0/glib.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <getopt.h>
 #include <libavformat/avformat.h>
 #include <libavutil/log.h>
 
 #include "data.h"
+#include "file_util.h"
 
 enum mode {COPY, MOVE};
 
 void getFiles(char* dir, GPtrArray*);
 void sortMusic(char* rootDir, GPtrArray*, int copy_mode);
-void betterMkdir(char* dir);
-void copy(char* src, char *dest);
-void move(char* src, char *dest);
 
 int main(int argc, char ** argv) {
     int copy_mode = COPY;
-    int combine_disks = false;
+    int quiet_mode = false;
     int c;
     char *source, *dest;
-    while ((c = getopt(argc,argv,"md")) != -1) {
+    while ((c = getopt(argc,argv,"mq")) != -1) {
         switch(c) {
         case 'm':
             copy_mode = MOVE;
             break;
-        case 'd':
-            combine_disks = true;
+        case 'q':
+            quiet_mode = true;
             break;
         default:
             printf("error, invalid argument");
             exit(EXIT_FAILURE);
         }
+    }
+
+    if(quiet_mode) {
+        printf("Quiet mode not implemented yet\n");
     }
     
     if(argv[optind] == NULL || argv[optind+1] == NULL) {
@@ -131,43 +128,3 @@ void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
     }
 }
 
-/*
- * creates a directory and prints an error if it fails, except if the directory
- * already exists, thats ok
- * Returns: nothing
- */
-void betterMkdir(char* dir) {
-    int err = mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO );
-    if(err == -1 && errno != EEXIST) {
-        printf("Error occured while creating %s. Error: %s\n",dir,strerror(errno));
-    }
-}
-
-/*
- * Moves a file, similar to mv. Tries to rename it and failing that copies it then
- * removes the original.
- */
-void move(char *source, char *dest) {
-    if(rename(source,dest) != 0) {
-        copy(source,dest);
-        remove(source);
-    }
-}
-
-/* 
- * Copies the file source to location dest
- * returns: nothing
- */
-void copy(char* source, char* dest) {
-    struct stat stat_buf;
-    off_t offset = 0;
-    int src = open(source, O_RDONLY);
-    fstat(src, &stat_buf);
-    int dst = open(dest,O_WRONLY | O_CREAT, stat_buf.st_mode);
-    if (sendfile(dst, src, &offset, stat_buf.st_size) == -1) {
-        printf("Error occured while copying %s to %s. Error: %s\n",
-         source, dest, strerror(errno));
-    }
-    close(src);
-    close(dst);
-}
