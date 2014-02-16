@@ -9,7 +9,7 @@
 Song* song_new(char* filename) {
     AVFormatContext *handle = NULL;
     if(avformat_open_input(&handle, filename, NULL, NULL) != 0) {
-        printf("Error opening file: %s",filename);
+        printf("Error opening file: %s\n",filename);
         return NULL;
     }
     if(!isAudio(handle)) {

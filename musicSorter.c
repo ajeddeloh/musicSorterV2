@@ -10,6 +10,7 @@
 
 #include "data.h"
 #include "file_util.h"
+#include "string_util.h"
 
 enum mode {COPY, MOVE};
 
@@ -40,7 +41,7 @@ int main(int argc, char ** argv) {
     }
     
     if(argv[optind] == NULL || argv[optind+1] == NULL) {
-        printf("Not enough arguments");
+        printf("Not enough arguments\n");
         exit(EXIT_FAILURE);
     }
     source = argv[optind];
@@ -72,9 +73,10 @@ void getFiles(char* dir, GPtrArray* files) {
     }
     struct dirent *entry = readdir(d);
     struct stat statp;
+    char* fullname = NULL;
     while(entry != NULL) {
         int len = strlen(dir)+strlen(entry->d_name)+2;
-        char* fullname = malloc(len);
+        fullname = realloc(fullname, len);
         snprintf(fullname, len, "%s/%s", dir, entry->d_name);
         stat(fullname, &statp);
         if(S_ISDIR(statp.st_mode)){
@@ -90,6 +92,7 @@ void getFiles(char* dir, GPtrArray* files) {
             }
         }
         free(fullname);
+        fullname = NULL;
         entry = readdir(d);
     }
     closedir(d);
