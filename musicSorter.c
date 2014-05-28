@@ -57,7 +57,6 @@ int main(int argc, char ** argv) {
 
     printf("loading all filenames\n");
     files = g_ptr_array_new();
-    //getFiles(source, files);
     ftw(source, loadFile, 100);
     printf("loaded %d files\n", files->len);
     sortMusic(dest, files, copy_mode);
@@ -82,51 +81,12 @@ int loadFile(const char *fpath, const struct stat * sb, int typeflag) {
     return 0;
 }
 
-/* 
- * Recursively finds all files in the directory dir and creates a Song
- * for each file found and stores them in files.
- * Returns: nothing
- */
-void getFiles(char* dir, GPtrArray* files) {
-    DIR *d = opendir(dir);
-    if( !d ) {
-        printf("Error opening directory %s\n", dir);
-        return;
-    }
-    struct dirent *entry = readdir(d);
-    struct stat statp;
-    char* fullname = NULL;
-    while(entry != NULL) {
-        int len = strlen(dir)+strlen(entry->d_name)+2;
-        fullname = realloc(fullname, len);
-        snprintf(fullname, len, "%s/%s", dir, entry->d_name);
-        stat(fullname, &statp);
-        if(S_ISDIR(statp.st_mode)){
-            if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) { 
-                getFiles(fullname, files);
-            }
-        } else {
-            Song* song = song_new(fullname);
-            if(song != NULL) {
-                g_ptr_array_add(files, song);
-            } else {
-                printf("Error opening/parsing: %s\n", fullname);
-            }
-        }
-        free(fullname);
-        fullname = NULL;
-        entry = readdir(d);
-    }
-    closedir(d);
-}
-
 /*
  * takes every Song* in songs and moves/copies (dependant on copy_mode)
  * it into the correct directory into rootDir.
  * Returns: nothing
  */
 void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
-    betterMkdir(rootDir);
     for(int i = 0; i < songs->len; i++) {
         Song* current = (Song*)g_ptr_array_index(songs, i);
         int len = strlen(rootDir) + strlen("/") + current->dest_fname_length + 1;

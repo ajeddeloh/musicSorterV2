@@ -3,7 +3,6 @@
 
 #include <sys/types.h>
 
-void betterMkdir(char* dir);
 int mkpath(const char*s, mode_t mode);
 void copy(char* src, char *dest);
 void move(char* src, char *dest);

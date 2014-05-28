@@ -12,20 +12,6 @@
 
 #include "file_util.h"
 
-/*
- * creates a directory and prints an error if it fails, except if the directory
- * already exists, thats ok
- * Returns: nothing
- */
-
-void betterMkdir(char* dir) {
-    int err = mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO );
-    if(err == -1 && errno != EEXIST) {
-        printf("Error occured while creating %s. Error: %s\n",dir,strerror(errno));
-    }
-}
-
-
 /* Function with behaviour like `mkdir -p' 
  * copied from http://niallohiggins.com/2009/01/08/mkpath-mkdir-p-alike-in-c-for-unix/
  */
