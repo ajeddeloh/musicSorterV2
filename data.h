@@ -27,7 +27,7 @@ typedef struct Song {
 } Song;
 
 //creates a Song from the specified file and returns it.
-Song* song_new(char* filename);
+Song* song_new(const char* filename);
 
 //free the specified metadata
 void metadata_free(Metadata* metadata);

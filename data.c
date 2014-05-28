@@ -6,7 +6,7 @@
 #include "data.h"
 #include "string_util.h"
 
-Song* song_new(char* filename) {
+Song* song_new(const char* filename) {
     AVFormatContext *handle = NULL;
     if(avformat_open_input(&handle, filename, NULL, NULL) != 0) {
         printf("Error opening file: %s\n",filename);

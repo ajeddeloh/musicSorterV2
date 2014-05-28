@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <libgen.h>
+#include <ftw.h>
 #include <libavformat/avformat.h>
 #include <libavutil/log.h>
 
@@ -16,7 +17,10 @@
 enum mode {COPY, MOVE};
 
 void getFiles(char* dir, GPtrArray*);
+int loadFile(const char *fpath, const struct stat *sb, int typeflag);
 void sortMusic(char* rootDir, GPtrArray*, int copy_mode);
+
+GPtrArray *files;
 
 int main(int argc, char ** argv) {
     int copy_mode = COPY;
@@ -52,12 +56,29 @@ int main(int argc, char ** argv) {
     av_log_set_level(AV_LOG_ERROR);
 
     printf("loading all filenames\n");
-    GPtrArray *files = g_ptr_array_new();
-    getFiles(source, files);
+    files = g_ptr_array_new();
+    //getFiles(source, files);
+    ftw(source, loadFile, 100);
     printf("loaded %d files\n", files->len);
     sortMusic(dest, files, copy_mode);
     
     g_ptr_array_free(files, true);
+    return 0;
+}
+
+/*
+ * trys to load a file into the files list
+ * for use with ftw
+*/
+int loadFile(const char *fpath, const struct stat * sb, int typeflag) {
+    if(typeflag == FTW_F) { //file
+        Song* tmp = song_new(fpath);
+        if(tmp != NULL) {
+            g_ptr_array_add(files, tmp);
+        } else {
+            printf("Error opening/parsing %s\n", fpath);
+        }
+    }
     return 0;
 }
 
