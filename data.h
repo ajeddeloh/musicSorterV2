@@ -22,6 +22,8 @@ typedef struct Song {
     char* validAlbum;
     char* validArtist;
     char* ext;
+    char* dest_fname;
+    int dest_fname_length; //does not contain '\0'
 } Song;
 
 //creates a Song from the specified file and returns it.

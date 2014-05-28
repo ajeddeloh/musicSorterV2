@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <libgen.h>
 #include <libavformat/avformat.h>
 #include <libavutil/log.h>
 
@@ -107,26 +108,18 @@ void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
     betterMkdir(rootDir);
     for(int i = 0; i < songs->len; i++) {
         Song* current = (Song*)g_ptr_array_index(songs, i);
-        int len = strlen(rootDir)+
-                strlen(current->validArtist)+
-                strlen(current->validAlbum)+
-                strlen(current->validTitle)+
-                strlen(current->ext)+4;
-        char* dirname = malloc(len);
-        snprintf(dirname, len, "%s/%s",rootDir, current->validArtist);
-        betterMkdir(dirname);
-        strcat(dirname, "/");
-        strcat(dirname, current->validAlbum);
-        betterMkdir(dirname);
-        strcat(dirname, "/");
-        strcat(dirname, current->validTitle);
-        strcat(dirname, current->ext);
+        int len = strlen(rootDir) + strlen("/") + current->dest_fname_length + 1;
+        char* fname = malloc(len);
+        snprintf(fname, len, "%s/%s", rootDir, current->dest_fname);
+        char* tmp = strdup(fname); //cuz dirname is stupid and modifies its argument
+        mkpath(dirname(tmp), S_IRWXU | S_IRWXG | S_IRWXO);
+        free (tmp);
         if(copy_mode == MOVE) {
-            move(current->filename, dirname);
+            move(current->filename, fname);
         } else {
-            copy(current->filename, dirname);
+            copy(current->filename, fname);
         }
-        free(dirname);
+        free(fname);
         song_free(current);
     }
 }

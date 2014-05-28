@@ -42,6 +42,11 @@ Song* song_new(char* filename) {
     song->validTitle = makeValid(song->metadata->title);
     song->validAlbum = makeValid(song->metadata->album);
     song->validArtist = makeValid(song->metadata->artist);
+    song->dest_fname_length = strlen(song->validArtist) + strlen("/") + strlen(song->validAlbum)
+        + strlen("/") + strlen(song->validTitle) + strlen(song->ext);
+    song->dest_fname = malloc(song->dest_fname_length + 1);
+    snprintf(song->dest_fname, song->dest_fname_length + 1, "%s/%s/%s%s",
+        song->validArtist, song->validAlbum, song->validTitle, song->ext);
     return song;
 }
 
@@ -55,6 +60,7 @@ void song_free(Song* song) {
     free(song->validAlbum);
     free(song->validArtist);
     free(song->ext);
+    free(song->dest_fname);
     free(song);
 }   
 

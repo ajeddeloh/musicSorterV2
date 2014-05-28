@@ -3,10 +3,12 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <libgen.h>
 
 #include "file_util.h"
 
@@ -15,11 +17,52 @@
  * already exists, thats ok
  * Returns: nothing
  */
+
 void betterMkdir(char* dir) {
     int err = mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO );
     if(err == -1 && errno != EEXIST) {
         printf("Error occured while creating %s. Error: %s\n",dir,strerror(errno));
     }
+}
+
+
+/* Function with behaviour like `mkdir -p' 
+ * copied from http://niallohiggins.com/2009/01/08/mkpath-mkdir-p-alike-in-c-for-unix/
+ */
+int mkpath(const char *s, mode_t mode) {
+        char *q, *r = NULL, *path = NULL, *up = NULL;
+        int rv;
+
+        rv = -1;
+        if (strcmp(s, ".") == 0 || strcmp(s, "/") == 0)
+                return (0);
+
+        if ((path = strdup(s)) == NULL)
+                exit(1);
+     
+        if ((q = strdup(s)) == NULL)
+                exit(1);
+
+        if ((r = dirname(q)) == NULL)
+                goto out;
+        
+        if ((up = strdup(r)) == NULL)
+                exit(1);
+
+        if ((mkpath(up, mode) == -1) && (errno != EEXIST))
+                goto out;
+
+        if ((mkdir(path, mode) == -1) && (errno != EEXIST))
+                rv = -1;
+        else
+                rv = 0;
+
+out:
+        if (up != NULL)
+                free(up);
+        free(q);
+        free(path);
+        return (rv);
 }
 
 /*
