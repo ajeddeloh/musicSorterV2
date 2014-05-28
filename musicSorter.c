@@ -16,7 +16,7 @@
 
 enum mode {COPY, MOVE};
 
-void getFiles(char* dir, GPtrArray*);
+void printHelp();
 int loadFile(const char *fpath, const struct stat *sb, int typeflag);
 void sortMusic(char* rootDir, GPtrArray*, int copy_mode);
 
@@ -27,7 +27,7 @@ int main(int argc, char ** argv) {
     int quiet_mode = false;
     int c;
     char *source, *dest;
-    while ((c = getopt(argc,argv,"mq")) != -1) {
+    while ((c = getopt(argc,argv,"mqh")) != -1) {
         switch(c) {
         case 'm':
             copy_mode = MOVE;
@@ -35,8 +35,11 @@ int main(int argc, char ** argv) {
         case 'q':
             quiet_mode = true;
             break;
+        case 'h':
+            printHelp();
+            break;
         default:
-            printf("error, invalid argument");
+            printf("error, invalid argument. run with -h for help");
             exit(EXIT_FAILURE);
         }
     }
@@ -47,6 +50,7 @@ int main(int argc, char ** argv) {
     
     if(argv[optind] == NULL || argv[optind+1] == NULL) {
         printf("Not enough arguments\n");
+        printHelp();
         exit(EXIT_FAILURE);
     }
     source = argv[optind];
@@ -65,6 +69,18 @@ int main(int argc, char ** argv) {
     return 0;
 }
 
+/*
+ * Displays the help message
+ */
+void printHelp() {
+    printf("Usage: musicsorter [OPTIONS] source dest\n");
+    printf("Options: \n");
+    printf("  m - move: move files instead of copying (faster if source and dest are on the same drive\n");
+    printf("  q - quiet: don't print out failures (totally not done yet)\n");
+    printf("  h - help: print this help menu\n");
+    exit(EXIT_SUCCESS);
+}
+ 
 /*
  * trys to load a file into the files list
  * for use with ftw
