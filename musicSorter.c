@@ -100,6 +100,13 @@ void printHelp() {
     printf("Options: \n");
     printf("  m - move: move files instead of copying (faster if source and dest are on the same drive\n");
     printf("  q - quiet: don't print out failures (totally not done yet)\n");
+    printf("  a - use album artist for artist if there is no artist\n");
+    printf("  A - use artist for the album artist if there is no album_artist\n");
+    printf("  f - use a custom format string to define a path. default is \"%%a/%%b/%%t\" \n");
+    printf("    %%a - album artist\n");
+    printf("    %%A - artist\n");
+    printf("    %%b - album\n");
+    printf("    %%t - title\n");
     printf("  h - help: print this help menu\n");
     exit(EXIT_SUCCESS);
 }
