@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <glib-2.0/glib.h>
 #include <string.h>
@@ -22,12 +21,27 @@ void sortMusic(char* rootDir, GPtrArray*, int copy_mode);
 
 GPtrArray *files;
 
+/*
+ * Args: 
+ * a - use album_artist for artist if artist is unknown
+ * A - use artist for album_artist if album_artist is unknown
+ * f <fmt string> - use custom format string for path, considering:
+ * A=Artist
+ * a=Album Artist
+ * b=Album
+ * t=title
+ */
+
+int copy_mode = COPY;
+int quiet_mode = false;
+int use_artist = false;
+int use_album_artist = false;
+const char *fmt_string = "%a/%b/%t";
+
 int main(int argc, char ** argv) {
-    int copy_mode = COPY;
-    int quiet_mode = false;
     int c;
     char *source, *dest;
-    while ((c = getopt(argc,argv,"mqh")) != -1) {
+    while ((c = getopt(argc,argv,"mqhaAf:")) != -1) {
         switch(c) {
         case 'm':
             copy_mode = MOVE;
@@ -37,6 +51,15 @@ int main(int argc, char ** argv) {
             break;
         case 'h':
             printHelp();
+            break;
+        case 'A':
+            use_artist = true;
+            break;
+        case 'a':
+            use_album_artist = true;
+            break;
+        case 'f':
+            fmt_string = strdup(optarg);
             break;
         default:
             printf("error, invalid argument. run with -h for help");
@@ -59,7 +82,7 @@ int main(int argc, char ** argv) {
     av_register_all();
     av_log_set_level(AV_LOG_ERROR);
 
-    printf("loading all filenames\n");
+    printf("\n\n\nloading all filenames using format string %s\n", fmt_string);
     files = g_ptr_array_new();
     ftw(source, loadFile, 100);
     printf("loaded %d files\n", files->len);
@@ -103,11 +126,11 @@ int loadFile(const char *fpath, const struct stat * sb, int typeflag) {
  * Returns: nothing
  */
 void sortMusic(char* rootDir, GPtrArray* songs, int copy_mode) {
-    for(int i = 0; i < songs->len; i++) {
+    for(unsigned int i = 0; i < songs->len; i++) {
         Song* current = (Song*)g_ptr_array_index(songs, i);
-        int len = strlen(rootDir) + strlen("/") + current->dest_fname_length + 1;
+        int len = snprintf(NULL, 0, "%s/%s.%s", rootDir, current->dest_fname, current->ext)+1;
         char* fname = malloc(len);
-        snprintf(fname, len, "%s/%s", rootDir, current->dest_fname);
+        snprintf(fname, len, "%s/%s.%s", rootDir, current->dest_fname, current->ext);
         char* tmp = strdup(fname); //cuz dirname is stupid and modifies its argument
         mkpath(dirname(tmp), S_IRWXU | S_IRWXG | S_IRWXO);
         free (tmp);
